@@ -35,6 +35,11 @@ class Frame(object):
     def top(self):
         return self.y
 
+    def __str__(self):
+        s = []
+        for prop in ('x', 'y', 'width', 'height'):
+            s.append('%s: %d' % (prop, getattr(self, prop)))
+        return ', '.join(s)
 
 
 class Screen(object):
@@ -45,6 +50,13 @@ class Screen(object):
         self.width = sdict['width']
         self.x = sdict['x']
         self.y = sdict['y']
+        self.selected = sdict['selected']
+
+    def __str__(self):
+        s = []
+        for prop in ('name', 'x', 'y', 'width', 'height'):
+            s.append('%s: %r' % (prop, getattr(self, prop)))
+        return ', '.join(s)
 
 
 class RatPy(object):
@@ -98,6 +110,7 @@ class RatPy(object):
             sdict['y'] = int(elts2[3])
             sdict['width'] = int(elts2[4])
             sdict['height'] = int(elts2[5])
+            sdict['selected'] = int(elts2[6])
             screens[sdict['number']] = sdict
         return screens
 
@@ -135,12 +148,21 @@ class RatPy(object):
 
     def debug_dump(self):
         for snum, screen in self.screens.items():
-            print('screen %d' % snum)
+            if screen.selected:
+                print('*screen %d' % snum)
+            else:
+                print('screen %d' % snum)
+            print('\t%s' % str(screen))
             for fnum, frame in screen.frames.items():
-                #if cf_ix == frame['number']:
-                #    print('\t*frame:')
-                #else:
-                #    print('\tframe:')
-                #for k1, v1 in frame.items():
-                #    print('\t\t%s: %s' % (k1, v1))
-                print('\tframe: %s' % frame.number)
+                if self.curframe_num == frame.number:
+                    print('\t*frame %d' % frame.number)
+                else:
+                    print('\tframe %d' % frame.number)
+                print('\t\t%s' % str(frame))
+
+    def current_frame(self):
+        cf_ix = self._call_curframe()
+        for snum, screen in self.screens.items():
+            for fnum, frame in screen.frames.items():
+                if fnum == cf_ix:
+                    return frame
