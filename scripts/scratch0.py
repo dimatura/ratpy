@@ -1,8 +1,6 @@
 
-import ratpy
+from ratpy import RatPy
 
-rp = ratpy.RatPy()
+RatPy.update()
 
-rp.update()
-
-rp.debug_dump()
+RatPy.debug_dump()

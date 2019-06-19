@@ -60,10 +60,10 @@ class Screen(object):
 
 
 class RatPy(object):
-    def __init__(self):
-        self.screens = {}
+    screens = {}
 
-    def _parse_sfdump(self, dump):
+    @staticmethod
+    def _parse_sfdump(dump):
         # print(dump)
         term_regex = r'''(?mx)
             \s*(?:
@@ -98,7 +98,8 @@ class RatPy(object):
             screens[frame['screen_num']].append(frame)
         return screens
 
-    def _parse_sdump(self, dump):
+    @staticmethod
+    def _parse_sdump(dump):
         screens = {}
         elts = [e.strip() for e in dump.split(',')]
         for e in elts:
@@ -114,55 +115,79 @@ class RatPy(object):
             screens[sdict['number']] = sdict
         return screens
 
-    def _call_sdump(self):
+    @staticmethod
+    def _call_sdump():
         return subprocess.check_output(['ratpoison', '-c', 'sdump'])
 
-    def _call_sfdump(self):
+    @staticmethod
+    def _call_sfdump():
         return subprocess.check_output(['ratpoison', '-c', 'sfdump'])
 
-    def _call_curframe(self):
+    @staticmethod
+    def _call_curframe():
         output = subprocess.check_output(['ratpoison', '-c', 'curframe'])
         return int(output)
 
-    def update(self):
-        self.update_screens()
-        self.update_frames()
-        self.curframe_num = self._call_curframe()
+    @staticmethod
+    def update():
+        RatPy.update_screens()
+        RatPy.update_frames()
+        RatPy.curframe_num = RatPy._call_curframe()
 
-    def update_screens(self):
-        sdump = self._call_sdump()
-        sdicts = self._parse_sdump(sdump)
+    @staticmethod
+    def update_screens():
+        sdump = RatPy._call_sdump()
+        sdicts = RatPy._parse_sdump(sdump)
         for snum, sdict in sdicts.items():
             screen = Screen(sdict)
-            self.screens[screen.number] = screen
+            RatPy.screens[screen.number] = screen
 
-    def update_frames(self):
-        sfdump = self._call_sfdump()
-        sfdict = self._parse_sfdump(sfdump)
+    @staticmethod
+    def update_frames():
+        sfdump = RatPy._call_sfdump()
+        sfdict = RatPy._parse_sfdump(sfdump)
         for snum, fdicts in sfdict.items():
             frames = {}
             for fdict in fdicts:
                 frame = Frame(fdict)
                 frames[fdict['number']] = frame
-            self.screens[snum].frames = frames
+            RatPy.screens[snum].frames = frames
 
-    def debug_dump(self):
-        for snum, screen in self.screens.items():
+    @staticmethod
+    def debug_dump():
+        for snum, screen in RatPy.screens.items():
             if screen.selected:
                 print('*screen %d' % snum)
             else:
                 print('screen %d' % snum)
             print('\t%s' % str(screen))
             for fnum, frame in screen.frames.items():
-                if self.curframe_num == frame.number:
+                if RatPy.curframe_num == frame.number:
                     print('\t*frame %d' % frame.number)
                 else:
                     print('\tframe %d' % frame.number)
                 print('\t\t%s' % str(frame))
 
-    def current_frame(self):
-        cf_ix = self._call_curframe()
-        for snum, screen in self.screens.items():
+    @staticmethod
+    def current_frame():
+        cf_ix = RatPy._call_curframe()
+        for snum, screen in RatPy.screens.items():
             for fnum, frame in screen.frames.items():
                 if fnum == cf_ix:
                     return frame
+
+    @staticmethod
+    def frame_gen():
+        for snum, screen in RatPy.screens.iteritems():
+            for fnum, frame in screen.frames:
+                yield frame
+
+    #def find_frame_left_global():
+    #    cur_frame = RatPy.current_frame()
+
+    #    for snum, screen in RatPy.screens:
+    #        for fnum, frame in screen.frames:
+    #            for cur in screen:
+    #                if frame['bottom'] == cur['top']:
+    #                    if frame['right'] >= cur['left'] and frame['left'] <= cur['right']:
+    #                        return cur
