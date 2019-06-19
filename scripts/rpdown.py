@@ -4,11 +4,6 @@ import re
 import subprocess
 
 
-class Ratpoison(object):
-    def __init__(self):
-        pass
-
-
 def parse_sfdump0(dump):
     out = OrderedDict()
 
@@ -134,8 +129,24 @@ def call_curframe():
     return int(output)
 
 
-cf_ix = call_curframe()
-sfdump = call_sfdump()
-print_sfdump(sfdump, cf_ix = cf_ix)
-curframe = get_current_frame(cf_ix, sfdump)
+
+#cf_ix = call_curframe()
+#sfdump = call_sfdump()
+#print_sfdump(sfdump, cf_ix = cf_ix)
+#curframe = get_current_frame(cf_ix, sfdump)
 #framedown = find_frame_down(curframe, sfdump)
+
+#sdump = subprocess.check_output(['ratpoison', '-c', 'sdump'])
+#elts = [e.strip() for e in sdump.split(',')]
+#print(elts)
+#for e in elts:
+#    elts2 = e.split()
+#    sdict = {}
+#    sdict['name'] = elts2[0]
+#    sdict['number'] = int(elts2[1])
+#    sdict['x'] = int(elts2[2])
+#    sdict['y'] = int(elts2[3])
+#    sdict['width'] = int(elts2[4])
+#    sdict['height'] = int(elts2[5])
+#    print(sdict)
+
