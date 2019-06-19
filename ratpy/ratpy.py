@@ -5,10 +5,44 @@ import subprocess
 import re
 
 
+def _call_sdump():
+    return subprocess.check_output(['ratpoison', '-c', 'sdump'])
+
+def _call_sfdump():
+    return subprocess.check_output(['ratpoison', '-c', 'sfdump'])
+
+def _call_curframe():
+    return subprocess.check_output(['ratpoison', '-c', 'curframe'])
+
+def _call_focusleft():
+    return subprocess.check_output(['ratpoison', '-c', 'focusleft'])
+
+def _call_focusleft():
+    return subprocess.check_output(['ratpoison', '-c', 'focusright'])
+
+def _call_focusup():
+    return subprocess.check_output(['ratpoison', '-c', 'focusup'])
+
+def _call_focusdown():
+    return subprocess.check_output(['ratpoison', '-c', 'focusdown'])
+
+def _call_nextscreen():
+    return subprocess.check_output(['ratpoison', '-c', 'nextscreen'])
+
+def _call_prevscreen():
+    return subprocess.check_output(['ratpoison', '-c', 'prevscreen'])
+
+def _call_sselect(num):
+    return subprocess.check_output(['ratpoison', '-c', 'sselect %d' % num])
+
+def _call_fselect(num):
+    return subprocess.check_output(['ratpoison', '-c', 'fselect %d' % num])
+
+
 class Frame(object):
     def __init__(self, fdict):
 	self.dedicated = fdict['dedicated']
-	self.screen = fdict['screen_num']
+	self.screen_num = fdict['screen_num']
 	self.screenh = fdict['screenh']
 	self.number = fdict['number']
 	self.height = fdict['height']
@@ -20,12 +54,16 @@ class Frame(object):
 	self.last_access = fdict['last-access']
 
     @property
+    def screen(self):
+        return RatPy.screens[self.screen_num]
+
+    @property
     def bottom(self):
-        return self.y + self.height
+        return self.gy + self.height
 
     @property
     def right(self):
-        return self.x + self.width
+        return self.gx + self.width
 
     @property
     def left(self):
@@ -35,9 +73,33 @@ class Frame(object):
     def top(self):
         return self.y
 
+    @property
+    def gx(self):
+        return self.x + self.screen.x
+
+    @property
+    def gy(self):
+        return self.y + self.screen.y
+
+    @property
+    def gbottom(self):
+        return self.gy + self.height
+
+    @property
+    def gright(self):
+        return self.gx + self.width
+
+    @property
+    def gleft(self):
+        return self.gx
+
+    @property
+    def gtop(self):
+        return self.gy
+
     def __str__(self):
         s = []
-        for prop in ('x', 'y', 'width', 'height'):
+        for prop in ('number', 'x', 'y', 'gx', 'gy', 'width', 'height'):
             s.append('%s: %d' % (prop, getattr(self, prop)))
         return ', '.join(s)
 
@@ -116,27 +178,14 @@ class RatPy(object):
         return screens
 
     @staticmethod
-    def _call_sdump():
-        return subprocess.check_output(['ratpoison', '-c', 'sdump'])
-
-    @staticmethod
-    def _call_sfdump():
-        return subprocess.check_output(['ratpoison', '-c', 'sfdump'])
-
-    @staticmethod
-    def _call_curframe():
-        output = subprocess.check_output(['ratpoison', '-c', 'curframe'])
-        return int(output)
-
-    @staticmethod
     def update():
         RatPy.update_screens()
         RatPy.update_frames()
-        RatPy.curframe_num = RatPy._call_curframe()
+        RatPy.curframe_num = int(_call_curframe())
 
     @staticmethod
     def update_screens():
-        sdump = RatPy._call_sdump()
+        sdump = _call_sdump()
         sdicts = RatPy._parse_sdump(sdump)
         for snum, sdict in sdicts.items():
             screen = Screen(sdict)
@@ -144,7 +193,7 @@ class RatPy(object):
 
     @staticmethod
     def update_frames():
-        sfdump = RatPy._call_sfdump()
+        sfdump = _call_sfdump()
         sfdict = RatPy._parse_sfdump(sfdump)
         for snum, fdicts in sfdict.items():
             frames = {}
@@ -170,7 +219,7 @@ class RatPy(object):
 
     @staticmethod
     def current_frame():
-        cf_ix = RatPy._call_curframe()
+        cf_ix = int(_call_curframe())
         for snum, screen in RatPy.screens.items():
             for fnum, frame in screen.frames.items():
                 if fnum == cf_ix:
@@ -182,12 +231,51 @@ class RatPy(object):
             for fnum, frame in screen.frames:
                 yield frame
 
-    #def find_frame_left_global():
-    #    cur_frame = RatPy.current_frame()
+    @staticmethod
+    def _frames_overlap_vertical(f1, f2):
+        return (f1.gtop < f2.gbottom) and (f2.gtop < f1.gbottom)
 
-    #    for snum, screen in RatPy.screens:
-    #        for fnum, frame in screen.frames:
-    #            for cur in screen:
-    #                if frame['bottom'] == cur['top']:
-    #                    if frame['right'] >= cur['left'] and frame['left'] <= cur['right']:
-    #                        return cur
+    @staticmethod
+    def _frames_overlap_horizontal(f1, f2):
+        return (f1.gleft < f2.gright) and (f2.gleft < f1.gright)
+
+    @staticmethod
+    def global_find_frame_left():
+        cur_frame = RatPy.current_frame()
+        for snum, screen in RatPy.screens.items():
+            for fnum, frame in screen.frames.items():
+                if cur_frame.gleft == frame.gright:
+                    if RatPy._frames_overlap_vertical(cur_frame, frame):
+                        return frame
+
+    @staticmethod
+    def global_find_frame_right():
+        cur_frame = RatPy.current_frame()
+        for snum, screen in RatPy.screens.items():
+            for fnum, frame in screen.frames.items():
+                if cur_frame.gright == frame.gleft:
+                    if RatPy._frames_overlap_vertical(cur_frame, frame):
+                        return frame
+
+    @staticmethod
+    def global_find_frame_up():
+        cur_frame = RatPy.current_frame()
+        for snum, screen in RatPy.screens.items():
+            for fnum, frame in screen.frames.items():
+                if cur_frame.gtop == frame.gbottom:
+                    if RatPy._frames_overlap_horizontal(cur_frame, frame):
+                        return frame
+
+    @staticmethod
+    def global_find_frame_bottom():
+        cur_frame = RatPy.current_frame()
+        for snum, screen in RatPy.screens.items():
+            for fnum, frame in screen.frames.items():
+                if cur_frame.gbottom == frame.gtop:
+                    if RatPy._frames_overlap_horizontal(cur_frame, frame):
+                        return frame
+
+    @staticmethod
+    def global_focusleft():
+        frame = RatPy.global_find_frame_left()
+        _call_fselect(frame.number)
