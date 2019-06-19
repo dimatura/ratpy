@@ -247,6 +247,7 @@ class RatPy(object):
                 if cur_frame.gleft == frame.gright:
                     if RatPy._frames_overlap_vertical(cur_frame, frame):
                         return frame
+        return None
 
     @staticmethod
     def global_find_frame_right():
@@ -256,6 +257,7 @@ class RatPy(object):
                 if cur_frame.gright == frame.gleft:
                     if RatPy._frames_overlap_vertical(cur_frame, frame):
                         return frame
+        return None
 
     @staticmethod
     def global_find_frame_up():
@@ -265,32 +267,38 @@ class RatPy(object):
                 if cur_frame.gtop == frame.gbottom:
                     if RatPy._frames_overlap_horizontal(cur_frame, frame):
                         return frame
+        return None
 
     @staticmethod
-    def global_find_frame_bottom():
+    def global_find_frame_down():
         cur_frame = RatPy.current_frame()
         for snum, screen in RatPy.screens.items():
             for fnum, frame in screen.frames.items():
                 if cur_frame.gbottom == frame.gtop:
                     if RatPy._frames_overlap_horizontal(cur_frame, frame):
                         return frame
+        return None
 
     @staticmethod
     def global_focusleft():
         frame = RatPy.global_find_frame_left()
-        _call_fselect(frame.number)
+        if frame is not None:
+            _call_fselect(frame.number)
 
     @staticmethod
     def global_focusright():
         frame = RatPy.global_find_frame_right()
-        _call_fselect(frame.number)
+        if frame is not None:
+            _call_fselect(frame.number)
 
     @staticmethod
     def global_focusup():
         frame = RatPy.global_find_frame_up()
-        _call_fselect(frame.number)
+        if frame is not None:
+            _call_fselect(frame.number)
 
     @staticmethod
     def global_focusdown():
         frame = RatPy.global_find_frame_down()
-        _call_fselect(frame.number)
+        if frame is not None:
+            _call_fselect(frame.number)
