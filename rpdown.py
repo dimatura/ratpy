@@ -69,7 +69,7 @@ def parse_sfdump(dump):
     frames = []
     for termtypes in re.finditer(term_regex, dump):
         groups = termtypes.groupdict()
-        print(groups)
+        #print(groups)
         if state == 'screen_init':
             if groups['name']:
                 frame = {}
@@ -94,7 +94,7 @@ def parse_sfdump(dump):
 
 def print_sfdump(sfdump, cf_ix = None):
     for k0, frames in sfdump.items():
-        print(k0)
+        print('screen %d' % k0)
         for frame in frames:
             if cf_ix == frame['number']:
                 print('\t*frame:')
@@ -139,4 +139,3 @@ sfdump = call_sfdump()
 print_sfdump(sfdump, cf_ix = cf_ix)
 curframe = get_current_frame(cf_ix, sfdump)
 #framedown = find_frame_down(curframe, sfdump)
-#print(framedown)
