@@ -279,3 +279,18 @@ class RatPy(object):
     def global_focusleft():
         frame = RatPy.global_find_frame_left()
         _call_fselect(frame.number)
+
+    @staticmethod
+    def global_focusright():
+        frame = RatPy.global_find_frame_right()
+        _call_fselect(frame.number)
+
+    @staticmethod
+    def global_focusup():
+        frame = RatPy.global_find_frame_up()
+        _call_fselect(frame.number)
+
+    @staticmethod
+    def global_focusdown():
+        frame = RatPy.global_find_frame_down()
+        _call_fselect(frame.number)

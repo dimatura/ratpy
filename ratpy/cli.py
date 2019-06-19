@@ -1,18 +1,41 @@
 # -*- coding: utf-8 -*-
 
-"""Console script for ratpy."""
 import sys
-import click
+import argparse
+
+from ratpy import RatPy as rp
 
 
-@click.command()
-def main(args=None):
-    """Console script for ratpy."""
-    click.echo("Replace this message by putting your code into "
-               "ratpy.cli.main")
-    click.echo("See click documentation at http://click.pocoo.org/")
+def focus(args):
+
+    rp.update()
+
+    if args.direction == 'left':
+        rp.global_focusleft()
+    elif args.direction == 'right':
+        rp.global_focusright()
+    elif args.direction == 'up':
+        rp.global_focusup()
+    elif args.direction == 'down':
+        rp.global_focusdown()
+    else:
+        print('Invalid argument for "focus"')
+
+
+def main():
+    """ratpy."""
+    parser = argparse.ArgumentParser()
+    subparsers = parser.add_subparsers()
+
+    focus_parser = subparsers.add_parser('focus')
+    focus_parser.add_argument('direction',
+                              type=str,
+                              help='direction')
+    focus_parser.set_defaults(func=focus)
+    args = parser.parse_args()
+    args.func(args)
     return 0
 
 
 if __name__ == "__main__":
-    sys.exit(main())  # pragma: no cover
+    sys.exit(main())
